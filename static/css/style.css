@@ -358,3 +358,34 @@ a { color: inherit; text-decoration: none; }
 .foe .ev, .foe .mon-card { animation: foe-in .5s cubic-bezier(.2,.8,.3,1) backwards; }
 .foe:nth-child(2) .ev, .foe:nth-child(2) .mon-card { animation-delay: .1s; }
 .foe:nth-child(3) .ev, .foe:nth-child(3) .mon-card { animation-delay: .2s; }
+/* ===== DÁN VÀO CUỐI FILE CSS HIỆN TẠI ===== */
+
+/* Thanh máu có vệt trắng chạy theo khi mất máu */
+.mc-hp { position: relative; }
+.mc-hp div { position: relative; z-index: 1; }
+.mc-hp .ghost { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; border-radius: 999px; background: #fde68a; opacity: .9;
+                transition: width calc(.6s / var(--spd)) ease calc(.35s / var(--spd)); }
+
+/* Địch/ta ra sân bằng JS (WAAPI) nên tắt animation trượt vào cũ */
+.foe .ev, .foe .mon-card { animation: none; }
+
+/* Đội hình đánh tự động: ô nhân vật chỉ để xem */
+.slot { cursor: default; }
+
+/* Địch đang ra sân trong dãy chấm ở HUD */
+.foe-dots i.cur { box-shadow: 0 0 0 2px var(--amber-l); }
+
+/* Banner tên chiêu */
+.fx-banner { position: absolute; top: 26%; z-index: 16; padding: 6px 16px; font-weight: 800; font-size: 15px; color: #fff; white-space: nowrap;
+             background: linear-gradient(90deg, rgba(10,14,22,.92), rgba(10,14,22,.55)); border-left: 4px solid var(--c); border-radius: 6px;
+             text-shadow: 0 0 10px var(--c); pointer-events: none; }
+.fx-banner i { color: var(--c); margin-right: 8px; }
+.fx-banner.ally { left: 9%; }
+.fx-banner.enemy { right: 9%; background: linear-gradient(270deg, rgba(10,14,22,.92), rgba(10,14,22,.55)); border-left: 0; border-right: 4px solid var(--c); }
+
+/* Vệt chém đánh thường */
+.fx-slash { position: absolute; width: 110px; height: 5px; margin: -2px 0 0 -55px; border-radius: 4px; pointer-events: none;
+            background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 12px var(--c), 0 0 24px var(--c); }
+
+/* Thân nhân vật dùng filter/transform từ animation, cần bo gọn để không giật layout */
+#ally-stage, .foe .ev { will-change: transform, filter; }
