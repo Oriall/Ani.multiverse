@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% set active_nav = 'team' %}
+{% block title %}Đội hình / Kho tướng{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/team.css') }}">{% endblock %}
+{% block content %}
+
+<main class="page-main team-page">
+  <div class="tm-head">
+    <h1 class="page-title"><span class="tm-ico">⚔️</span> Đội hình / Kho tướng</h1>
+    <div class="tm-hint"><span class="tm-ping">👆</span> Kéo thả để sắp xếp, bấm vào tướng để xem chi tiết. Tướng ở ô <b>#1</b> ra trận trước.</div>
+  </div>
+
+  <section class="tm-panel">
+    <div class="tm-panel-h">
+      <span><span class="em">🛡️</span> Đội hình chính</span>
+      <div class="tm-right">
+        <span class="tm-avg">Cấp trung bình: <b id="tm-avg">0</b></span>
+        <span class="tm-count pixel" id="tm-count">0 / 6</span>
+      </div>
+    </div>
+    <div class="tm-slots" id="tm-slots"></div>
+  </section>
+
+  <section class="tm-panel">
+    <div class="tm-panel-h">
+      <span><span class="em">🗃️</span> Kho tướng <span class="tm-tagb">Tất cả nhân vật</span></span>
+      <span class="tm-count pixel" id="tm-total"></span>
+    </div>
+    <div class="tm-toolbar">
+      <div class="tm-search"><span aria-hidden="true">🔍</span><input id="tm-q" type="search" placeholder="Tìm tướng hoặc bộ anime..."></div>
+      <select id="tm-el">
+        <option value="">Mọi hệ</option>
+        <option value="fire">Hỏa</option><option value="water">Thủy</option><option value="wind">Phong</option>
+        <option value="earth">Thổ</option><option value="thunder">Lôi</option><option value="light">Quang</option><option value="dark">Ám</option>
+      </select>
+      <select id="tm-rar">
+        <option value="">Mọi độ hiếm</option><option value="SSR">SSR</option><option value="SR">SR</option><option value="R">R</option>
+      </select>
+      <select id="tm-sort">
+        <option value="level">Sắp xếp: Cấp độ</option><option value="rarity">Sắp xếp: Độ hiếm</option>
+        <option value="atk">Sắp xếp: Công</option><option value="hp">Sắp xếp: HP</option>
+        <option value="spd">Sắp xếp: Tốc độ</option><option value="name">Sắp xếp: Tên</option>
+      </select>
+      <label class="tm-check"><input type="checkbox" id="tm-hide"> Ẩn tướng trong đội</label>
+    </div>
+    <div class="tm-grid" id="tm-grid"></div>
+  </section>
+</main>
+
+<div class="tm-modal" id="tm-modal" hidden>
+  <button class="tm-nav prev" id="tm-prev" aria-label="Tướng trước"><i class="fa-solid fa-chevron-left"></i></button>
+  <div class="tm-dialog" id="tm-dialog" role="dialog" aria-modal="true"></div>
+  <button class="tm-nav next" id="tm-next" aria-label="Tướng sau"><i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/team.js') }}"></script>{% endblock %}

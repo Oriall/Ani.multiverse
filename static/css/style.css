@@ -389,3 +389,129 @@ a { color: inherit; text-decoration: none; }
 
 /* Thân nhân vật dùng filter/transform từ animation, cần bo gọn để không giật layout */
 #ally-stage, .foe .ev { will-change: transform, filter; }
+/* ===== DÁN THÊM VÀO CUỐI FILE CSS (sau battle-extra.css) ===== */
+
+/* Lớp ảnh nền */
+.bg-scene { position: absolute; inset: 0; overflow: hidden; }
+.bg-img { position: absolute; inset: -3%; background-size: cover; background-position: center bottom; background-repeat: no-repeat; will-change: transform, opacity; }
+
+/* Có ảnh nền thì ẩn trang trí mặc định, thêm vignette cho dễ nhìn nhân vật */
+.arena.has-img .bg-dots, .arena.has-img .bg-pillars, .arena.has-img .lantern { display: none; }
+.arena.has-img .bg-floor { background: linear-gradient(to top, rgba(5,8,14,.7), transparent); border-top: 0; }
+.arena.has-img .bg-floor div { opacity: .06; }
+.arena.has-img .bg::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+                            background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.5)); }
+
+/* Chuyển cảnh: viền điện ảnh, vệt tốc độ, thẻ tên khu */
+.scene-bar { position: absolute; left: 0; right: 0; height: 11%; background: #000; z-index: 18; pointer-events: none; }
+.scene-bar.top { top: 0; } .scene-bar.bottom { bottom: 0; }
+.scene-lines { position: absolute; inset: 0; z-index: 9; pointer-events: none; opacity: 0;
+               background: repeating-linear-gradient(to bottom, transparent 0 34px, rgba(255,255,255,.07) 34px 36px);
+               -webkit-mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);
+               mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent); }
+.scene-card { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); z-index: 19; text-align: center; pointer-events: none;
+              padding: 14px 36px; border-radius: 10px; background: rgba(8,11,18,.78); border: 1px solid rgba(251,191,36,.5); backdrop-filter: blur(4px); }
+.scene-card small { display: block; font-size: 12px; color: var(--slate); letter-spacing: .06em; margin-bottom: 4px; }
+.scene-card b { font-size: 22px; font-weight: 800; color: var(--amber-xl); text-shadow: 0 0 14px rgba(245,158,11,.6); }
+/* ===== Nhân vật to hơn, đứng sát mặt đất ===== */
+:root { --ally-h: clamp(210px, 36vh, 360px); --foe-h: clamp(150px, 25vh, 260px); }
+
+/* Đứng trên bãi cỏ: neo đáy thay vì căn giữa. Chỉnh số 9vh để nâng/hạ chân nhân vật */
+.field { align-items: flex-end; padding-bottom: clamp(24px, 9vh, 110px); }
+.party, .vs { align-self: center; }          /* bảng đội hình và chữ VS vẫn ở giữa */
+
+/* Phe ta */
+.sprite { width: calc(var(--ally-h) * 1.3); height: var(--ally-h); }
+.sprite .char-img { height: var(--ally-h); max-width: calc(var(--ally-h) * 1.3); }
+.sprite .mon { font-size: calc(var(--ally-h) * .6); }          /* khi dùng icon thay ảnh */
+.sprite .shadow { width: calc(var(--ally-h) * .7); }
+
+/* Phe địch: thẻ HP nằm trên đầu giống phe ta, cùng đường chân */
+.foe { flex-direction: column; gap: 6px; }
+.foe .ev { width: calc(var(--foe-h) * 1.2); height: var(--foe-h); }
+.foe .ev .char-img { height: var(--foe-h); max-width: calc(var(--foe-h) * 1.2); }
+.foe .ev .mon { font-size: calc(var(--foe-h) * .6); }
+.foe .shadow { width: calc(var(--foe-h) * .6); }
+.foe.boss .ev { width: calc(var(--foe-h) * 1.6); height: calc(var(--foe-h) * 1.3); }
+.foe.boss .ev .char-img { height: calc(var(--foe-h) * 1.3); max-width: calc(var(--foe-h) * 1.6); }
+
+@media (max-width: 640px) { :root { --ally-h: 150px; --foe-h: 110px; } }
+/* ===== Dịch nhân vật sang trái ===== */
+:root { --ally-shift: 70px; --foe-shift: 90px; }   /* số càng lớn càng lệch trái */
+
+.ally-wrap { position: relative; left: calc(var(--ally-shift) * -1); }
+.enemies   { position: relative; left: calc(var(--foe-shift) * -1); }
+
+@media (max-width: 1100px) { :root { --ally-shift: 0px; --foe-shift: 0px; } }  /* màn nhỏ giữ nguyên bố cục */
+/* ===== Hiển thị máu kiểu Pokémon + bỏ vòng tròn cam ===== */
+.ally-wrap .ring, .ally-wrap .glow { display: none; }     /* vòng quay cam + quầng sáng */
+
+:root { --bar-w: clamp(84px, 9vw, 120px); --bar-top: -16px; }
+
+/* Thẻ không còn là hộp: các phần tử con tự định vị quanh nhân vật */
+.ally-wrap, .foe { position: relative; }
+.mon-card.ally, .mon-card.enemy { display: contents; }
+
+/* Thanh máu nhỏ trên đầu */
+.mon-card .mc-hp { position: absolute; left: 50%; top: var(--bar-top); transform: translateX(-50%); z-index: 3;
+                   width: var(--bar-w); height: 11px; border: 2px solid #0b1220; border-radius: 999px;
+                   background: #1b2333; box-shadow: 0 2px 0 rgba(0,0,0,.45); overflow: hidden; }
+
+/* Tên + level dưới chân, chữ có viền đen */
+.mon-card > .mc-row:first-child { position: absolute; left: 50%; top: calc(100% + 14px); transform: translateX(-50%); z-index: 3;
+                                  display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.mon-card .mc-name { max-width: 150px; font-size: 12px; color: #fff; }
+.mon-card.enemy.boss .mc-name { color: #fecdd3; }
+.mon-card .mc-lv { font-size: 10px; color: #fde68a; }
+.mon-card .mc-name, .mon-card .mc-lv { text-shadow: -1px 0 #000, 1px 0 #000, 0 -1px #000, 0 1px #000, 0 2px 0 #000; }
+
+/* EXP của phe ta: vạch mảnh dưới tên */
+.mon-card.ally .mc-exp { position: absolute; left: 50%; top: calc(100% + 36px); transform: translateX(-50%); z-index: 3;
+                         width: var(--bar-w); height: 4px; border: 0; }
+
+/* Ẩn các phần chi tiết (số HP, hệ, chiêu + hồi chiêu, chữ EXP) */
+.mon-card .mc-row.mono, .mon-card .mc-moves { display: none; }
+
+/* Nhân vật rút về/gục thì thanh máu cũng biến mất theo */
+.ally-wrap:has(#ally-stage[style*="hidden"]) .mon-card,
+.foe:has(.ev[style*="hidden"]) .mon-card { visibility: hidden; }
+
+@media (max-width: 640px) { :root { --bar-w: 76px; } }
+/* ===== Chỉ hiện level dưới chân ===== */
+.mon-card .mc-name { display: none; }
+.mon-card .mc-lv { font-size: 12px; color: #fff; }
+
+/* ===== Số sát thương: bỏ khung, chữ trắng viền đen ===== */
+.dmg { background: none; border: 0; box-shadow: none; padding: 0; border-radius: 0;
+       color: #fff; font-size: 16px;
+       text-shadow: -2px 0 #000, 2px 0 #000, 0 -2px #000, 0 2px 0 #000, -2px -2px #000, 2px -2px #000, -2px 2px #000, 2px 2px #000; }
+.dmg.crit { color: #fbbf24; font-size: 20px; }     /* chí mạng, "Khắc hệ!", LEVEL UP: vàng, to hơn */
+.dmg.heal { color: #4ade80; }                      /* hồi máu: xanh lá */
+.dmg.weak { color: #cbd5e1; font-size: 13px; }     /* bị kháng: xám, nhỏ hơn */
+/* ===== Font pixel làm font chính ===== */
+:root { --font-pixel: 'Press Start 2P', monospace; --font-vn: 'VT323', 'Press Start 2P', monospace; }
+
+/* Chữ thường (có dấu tiếng Việt): VT323 */
+body, button, input { font-family: var(--font-vn); }
+
+/* VT323 nhỏ hơn font cũ nên phải tăng cỡ chữ để dễ đọc */
+.dlg-text { font-size: 21px; font-weight: 400; }
+.log { font-size: 17px; line-height: 1.3; }
+.ticker { font-size: 16px; }
+.toast { font-size: 18px; }
+.nav { font-size: 17px; font-weight: 400; }
+.nav-title { font-size: 14px; }
+.box-title, .pf-name { font-size: 18px; font-weight: 400; }
+.story-title { font-size: 22px; font-weight: 400; }
+.story-row, .story-chap, .pf-dex, .online, .zone, .tl-title, .clock b, .chip, .retro-btn, .auto { font-size: 16px; font-weight: 400; }
+.spawn-n { font-size: 17px; font-weight: 400; } .spawn-s { font-size: 14px; }
+.page-title { font-size: 22px; font-weight: 400; }
+
+/* Số và nhãn ngắn: Press Start 2P */
+.pixel, .mc-lv, .res-num, #clock, .tl-count, .item .qty, .speed button, .foe-dots + * { font-family: var(--font-pixel); font-weight: 400; }
+.speed button { font-size: 11px; }
+.res-num { font-size: 12px; }
+
+/* Số sát thương: pixel, chữ có dấu (Khắc hệ!, Hồi phục...) tự rơi về VT323 */
+.dmg { font-family: var(--font-pixel); font-size: 14px; }
+.dmg.crit { font-size: 16px; }

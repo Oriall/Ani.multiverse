@@ -293,8 +293,8 @@
       layer.appendChild(s);
       const ang = rand(0, Math.PI * 2), d = rand(35, 95);
       s.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 },
-                 { transform: `translate(${Math.cos(ang) * d}px,${Math.sin(ang) * d}px) scale(.2)`, opacity: 0 }],
-                { duration: rand(350, 600) / S.speed, easing: 'cubic-bezier(.1,.7,.3,1)' }).onfinish = () => s.remove();
+      { transform: `translate(${Math.cos(ang) * d}px,${Math.sin(ang) * d}px) scale(.2)`, opacity: 0 }],
+        { duration: rand(350, 600) / S.speed, easing: 'cubic-bezier(.1,.7,.3,1)' }).onfinish = () => s.remove();
     }
   }
   function impact(t, mv, u, big) {
@@ -518,7 +518,8 @@
     else if (r.em < 1) popup(t, 'Bị kháng', 'weak', '-26px');
     if (melee) slash(t, col, r.crit);
     impact(t, mv, u, r.crit || t.hp <= 0);
-    shake(t.hp <= 0 ? 2.2 : r.crit ? 2 : heavy ? 1.4 : .6);
+    // Chỉ rung khi chí mạng hoặc dùng chiêu đặc biệt (không phải đánh thường)
+    if (r.crit || mv !== BASIC) shake(r.crit ? 2 : heavy ? 1.4 : 1);
     if (r.crit || heavy) flash(col, .26);
     const em = r.em > 1 ? ' (khắc hệ)' : r.em < 1 ? ' (bị kháng)' : '';
     log(`${nameTag(u)} ${mv !== BASIC ? `sử dụng <b>${mv.name}</b>!` : 'tấn công'} ${nameTag(t)} nhận <b>${fmt(r.dmg)}</b> sát thương${r.crit ? ' chí mạng' : ''}${em}.`, r.crit ? 'crit' : '');
@@ -625,6 +626,92 @@
     }
   }
 
+  /* =====================================================
+     BACKGROUND THEO KHU: cứ 5 ải đổi 1 ảnh
+     Tên ảnh: man{vũ_trụ}_{khu}.{đuôi}   vd: man2_1.png = vũ trụ 2, khu 1
+     Đặt trong static/img_bg/ (đổi BG_DIR nếu muốn)
+     ===================================================== */
+  const BG_DIR = '/static/img_bg/';
+  const BG_EXTS = ['png', 'jpg', 'jpeg', 'webp'];   // thu gọn lại còn 1 đuôi nếu bạn chỉ dùng 1 loại
+  const SEGS = Math.ceil(NODES / REST_EVERY);
+  const segOf = node => Math.ceil(node / REST_EVERY);
+  const bgCache = new Map();
+  function loadBg(uni, seg) {
+    const key = `man${uni}_${seg}`;
+    if (bgCache.has(key)) return bgCache.get(key);
+    const p = (async () => {
+      for (const ext of BG_EXTS) {
+        const url = `${BG_DIR}${key}.${ext}`;
+        const ok = await new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = url; });
+        if (ok) return url;
+      }
+      return null;                                   // không có ảnh -> dùng nền mặc định
+    })();
+    bgCache.set(key, p); return p;
+  }
+  function addEl(cls, html = '') {
+    const d = document.createElement('div'); d.className = cls; d.innerHTML = html; arenaEl().appendChild(d); return d;
+  }
+  // Đồng bộ background với ải hiện tại. Gọi giữa các trận nên cả hai bên đang "tạm dừng".
+  async function syncScene(instant = false) {
+    const uni = S.user.universe_id, seg = segOf(S.user.node), key = `${uni}_${seg}`;
+    if (S.bgKey === key) return;
+    const first = S.bgKey == null;
+    S.bgKey = key;
+    const url = await loadBg(uni, seg);
+    if (seg < SEGS) loadBg(uni, seg + 1);            // tải trước ảnh khu kế tiếp
+    let scene = $('.bg-scene');
+    if (!scene) { scene = document.createElement('div'); scene.className = 'bg-scene'; $('.bg').prepend(scene); }
+    const old = scene.querySelector('.bg-img');
+    let neu = null;
+    if (url) { neu = document.createElement('div'); neu.className = 'bg-img'; neu.style.backgroundImage = `url("${url}")`; scene.appendChild(neu); }
+    arenaEl().classList.toggle('has-img', !!url);
+    if (instant || first || REDUCED) { if (old) old.remove(); return; }
+
+    /* ---- Chuyển cảnh ---- */
+    const D = ms => ms / S.speed, un = S.universe;
+    log(`Đội hình tiến vào ${un.chapter} - Khu ${seg}...`, 'sys');
+    S.enemies = []; S.foe = null; $('#enemies').innerHTML = ''; renderFoeDots();   // dọn sân, 2 bên ngừng đánh
+    const stage = $('#ally-stage');
+    stage.getAnimations().forEach(a => a.cancel()); stage.style.visibility = '';
+
+    const barT = addEl('scene-bar top'), barB = addEl('scene-bar bottom'), lines = addEl('scene-lines');
+    await Promise.all([
+      barT.animate([{ transform: 'translateY(-100%)' }, { transform: 'none' }], { duration: D(350), easing: 'ease-out', fill: 'forwards' }).finished,
+      barB.animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: D(350), easing: 'ease-out', fill: 'forwards' }).finished,
+    ]).catch(() => { });
+
+    // nhân vật chạy tại chỗ trong lúc phông nền trượt
+    const walk = stage.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-12px)' }, { transform: 'translateY(0)' }],
+      { duration: D(360), iterations: Infinity, easing: 'ease-in-out' });
+    lines.animate([{ opacity: 0 }, { opacity: .5 }], { duration: D(400), fill: 'forwards' });
+
+    const dur = D(1500), jobs = [];
+    if (old) jobs.push(old.animate([{ transform: 'translateX(0) scale(1)', opacity: 1 }, { transform: 'translateX(-7%) scale(1.07)', opacity: 0 }],
+      { duration: dur, easing: 'ease-in-out', fill: 'forwards' }).finished);
+    if (neu) jobs.push(neu.animate([{ transform: 'translateX(7%) scale(1.07)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: dur, easing: 'ease-in-out' }).finished);
+
+    const card = addEl('scene-card', `<small>${un.name} · ${un.chapter}</small><b>Khu ${seg} / ${SEGS}</b>`);
+    card.animate([{ opacity: 0, transform: 'translate(-50%,-30%) scale(.92)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .25 },
+    { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .8 }, { opacity: 0, transform: 'translate(-50%,-70%) scale(1.04)' }],
+      { duration: dur + D(700) }).onfinish = () => card.remove();
+
+    await Promise.all(jobs.map(j => j.catch(() => { })));
+    if (old) old.remove();
+    await sleep(D(700));
+
+    // kết thúc: nhân vật dừng chạy, bỏ viền điện ảnh
+    walk.cancel();
+    await Promise.all([
+      barT.animate([{ transform: 'none' }, { transform: 'translateY(-100%)' }], { duration: D(350), easing: 'ease-in', fill: 'forwards' }).finished,
+      barB.animate([{ transform: 'none' }, { transform: 'translateY(100%)' }], { duration: D(350), easing: 'ease-in', fill: 'forwards' }).finished,
+      lines.animate([{ opacity: .5 }, { opacity: 0 }], { duration: D(350), fill: 'forwards' }).finished,
+    ]).catch(() => { });
+    barT.remove(); barB.remove(); lines.remove();
+    await sleep(D(250));
+  }
+
   /* ---------- Rewards & main loop ---------- */
   async function claim() {
     try {
@@ -680,6 +767,7 @@
   }
   async function mainLoop() {
     for (; ;) {
+      await syncScene();                 // đổi background + chuyển cảnh nếu sang khu mới
       const cleared = S.user.node;
       const res = await fight();
       if (res === 'win') { if (await claim()) await restStop(cleared); }
@@ -698,7 +786,7 @@
   function bindUI() {
     document.querySelectorAll('.speed button').forEach(b => b.onclick = () => setSpeed(+b.dataset.speed));
     document.querySelectorAll('[data-phase]').forEach(b => b.onclick = e => { e.preventDefault(); toast(`"${b.dataset.label}" sẽ mở ở Giai đoạn ${b.dataset.phase}.`); });
-    document.querySelectorAll('.nav-item:not([data-phase])').forEach(a => a.onclick = e => e.preventDefault());
+document.querySelectorAll('.nav-item.active').forEach(a => a.onclick = e => e.preventDefault());
     $('#btn-save').onclick = async () => { try { await api('/api/save', {}); toast('Đã lưu game.'); } catch (e) { toast(e.message); } };
     $('#btn-settings').onclick = () => toast('Cài đặt đang được phát triển.');
     $('#btn-donate').onclick = () => toast('Cảm ơn bạn đã ủng hộ!');
@@ -718,6 +806,7 @@
     setSpeed(sp);
     applyState(await api('/api/state'));
     log('Cổng không gian đã mở. Đội hình tự động chiến đấu theo lượt.', 'sys');
+    await syncScene(true);               // lần đầu: đặt background ngay, không chuyển cảnh
     mainLoop();
   })();
 })();

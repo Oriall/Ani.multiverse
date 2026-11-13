@@ -233,6 +233,11 @@ def create_app():
         if not current_user():
             return redirect(url_for("auth.login"))
         return render_template("index.html")
+    @app.route("/team")
+    def team():
+        if not current_user():
+            return redirect(url_for("auth.login"))
+        return render_template("team.html")
     @app.route("/ping")
     def ping():
         return "ok", 200, {"Cache-Control": "no-store"}

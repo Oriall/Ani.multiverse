@@ -7,7 +7,7 @@ from models import db, now, User, UserCharacter, AnimeCharacterTemplate, Item, U
 api = Blueprint("api", __name__, url_prefix="/api")
 NODES = 30
 MAX_MOVES = 4
-
+MAX_TEAM = 6
 
 def get_user():
     u = current_user()
@@ -43,6 +43,15 @@ def char_dict(c):
             "def": int(t.base_def * f), "spd": t.base_spd,
             "moves": moves_of(c)}
 
+def roster_char(c):
+    """char_dict + dữ liệu cho trang Đội hình: chiêu đang dùng, toàn bộ chiêu có thể học."""
+    d = char_dict(c)
+    d["tid"] = c.template_id
+    d["equipped"] = [m["id"] for m in d["moves"]]
+    d["auto"] = not c.equipped_moves
+    d["learnset"] = [{**lm.move.to_dict(), "learn_level": lm.learn_level,
+                      "learned": lm.learn_level <= c.level} for lm in c.template.learnset]
+    return d
 
 def state(user):
     team = sorted([c for c in user.characters if c.slot is not None], key=lambda c: c.slot)
@@ -72,7 +81,36 @@ def get_state():
     db.session.commit()
     return jsonify(state(user))
 
+@api.get("/roster")
+def roster():
+    user = get_user()
+    cap = universe_of(user.universe_id)["lv_max"]
+    f = 1 + 0.1 * (cap - 1)
+    ts = AnimeCharacterTemplate.query.all()
+    ref = {"hp": max([t.base_hp for t in ts] or [1]) * f,
+           "atk": max([t.base_atk for t in ts] or [1]) * f,
+           "def": max([t.base_def for t in ts] or [1]) * f,
+           "spd": max([t.base_spd for t in ts] or [1])}
+    chars = sorted(user.characters, key=lambda c: (c.slot is None, c.slot or 0, -c.level, c.id))
+    return jsonify({"characters": [roster_char(c) for c in chars], "max_team": MAX_TEAM,
+                    "cap": cap, "ref": {k: max(1, int(v)) for k, v in ref.items()}})
 
+
+@api.post("/team")
+def set_team():
+    """Body: {"team": [uid, ...]}: thứ tự = vị trí trong đội (đầu tiên là tiên phong)."""
+    user = get_user()
+    ids = (request.get_json(silent=True) or {}).get("team")
+    if (not isinstance(ids, list) or not ids or len(ids) > MAX_TEAM
+            or not all(isinstance(i, int) for i in ids) or len(set(ids)) != len(ids)):
+        return jsonify(error=f"Đội hình cần 1-{MAX_TEAM} tướng, không trùng nhau."), 400
+    mine = {c.id: c for c in user.characters}
+    if any(i not in mine for i in ids):
+        return jsonify(error="Có tướng không thuộc về bạn."), 403
+    for cid, c in mine.items():
+        c.slot = ids.index(cid) if cid in ids else None
+    db.session.commit()
+    return jsonify({"ok": True, "team": ids})
 @api.post("/save")
 def save():
     user = get_user()
@@ -83,17 +121,20 @@ def save():
 
 @api.post("/character/<int:uid>/moves")
 def set_moves(uid):
-    """Chọn chiêu (dùng cho UI sau này). Body: {"moves": [move_id, ...]}"""
+    """Chọn chiêu. Body: {"moves": [move_id, ...]}; mảng rỗng = tự động."""
     user, c = get_user(), db.get_or_404(UserCharacter, uid)
     if c.user_id != user.id:
         return jsonify(error="Không phải nhân vật của bạn."), 403
-    ids = (request.get_json(silent=True) or {}).get("moves", [])[:MAX_MOVES]
+    ids = (request.get_json(silent=True) or {}).get("moves", [])
+    if not isinstance(ids, list) or not all(isinstance(i, int) for i in ids):
+        return jsonify(error="Dữ liệu chiêu không hợp lệ."), 400
+    ids = list(dict.fromkeys(ids))[:MAX_MOVES]
     ok = {lm.move_id for lm in c.template.learnset if lm.learn_level <= c.level}
     if not all(i in ok for i in ids):
         return jsonify(error="Chiêu chưa học."), 400
     c.equipped_moves = ids or None
     db.session.commit()
-    return jsonify(state(user))
+    return jsonify({**state(user), "character": roster_char(c)})
 
 
 @api.post("/battle/reward")
