@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% set bare = true %}
+{% block title %}Quản trị · Anime Multiverse{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+{% block head %}
+<meta name="csrf" content="{{ csrf }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+{% block topbar %}{% endblock %}
+
+{% block content %}
+<header class="ad-head">
+  <div class="ad-top">
+    <div class="ad-brand">
+      <span class="ad-logo"><i class="fa-solid fa-dharmachakra"></i></span>
+      <a class="ad-title" href="{{ url_for('admin.dashboard') }}">Anime Multiverse</a>
+      <span class="ad-ver">Quản trị</span>
+    </div>
+    <div class="ad-right">
+      <a class="btn ghost sm" href="{{ url_for('index') }}"><i class="fa-solid fa-gamepad"></i><span>Về game</span></a>
+      {% if current_user %}
+      <div class="ad-user">
+        <span class="ad-av"><i class="fa-solid fa-user-shield"></i></span>
+        <div><b>{{ current_user.name }}</b><small>Quản trị viên</small></div>
+      </div>
+      {% endif %}
+      <a class="btn danger sm" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i><span>Đăng xuất</span></a>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="on c-amber"><i class="fa-solid fa-gauge-high"></i><span>Tổng quan</span></button>
+    <button data-tab="import"   class="c-cyan"><i class="fa-solid fa-cloud-arrow-up"></i><span>Nạp dữ liệu</span></button>
+    <button data-tab="chars"    class="c-purple"><i class="fa-solid fa-user-group"></i><span>Nhân vật</span></button>
+    <button data-tab="stages"   class="c-green"><i class="fa-solid fa-map"></i><span>Màn chơi</span></button>
+    <button data-tab="moves"    class="c-amber"><i class="fa-solid fa-burst"></i><span>Chiêu thức</span></button>
+    <button data-tab="users"    class="c-blue"><i class="fa-solid fa-user-shield"></i><span>Tài khoản</span></button>
+    <button data-tab="images"   class="c-yellow"><i class="fa-solid fa-images"></i><span>Ảnh</span></button>
+  </nav>
+</header>
+
+<main class="adm">
+
+  <!-- ===== TỔNG QUAN ===== -->
+  <section class="pane on" id="tab-overview">
+    <div class="pane-head">
+      <div class="ph-ico c-amber"><i class="fa-solid fa-gauge-high"></i></div>
+      <div class="ph-txt"><h2>Tổng quan hệ thống</h2><p>Các chỉ số tổng hợp của game và lối tắt tới từng chức năng quản trị.</p></div>
+    </div>
+    <div class="cards" id="stats"></div>
+
+    <h3 class="sec-title">Truy cập nhanh</h3>
+    <div class="quick-grid">
+      <button class="quick c-cyan" data-goto="import"><span class="q-ico"><i class="fa-solid fa-cloud-arrow-up"></i></span><span class="q-txt"><b>Nạp dữ liệu</b><small>Nhập/xuất nhân vật, màn chơi, chiêu thức bằng file .txt</small></span><i class="fa-solid fa-chevron-right q-go"></i></button>
+      <button class="quick c-purple" data-goto="chars"><span class="q-ico"><i class="fa-solid fa-user-group"></i></span><span class="q-txt"><b>Nhân vật</b><small>Thêm, sửa chỉ số, độ hiếm, tuyệt chiêu</small></span><i class="fa-solid fa-chevron-right q-go"></i></button>
+      <button class="quick c-green" data-goto="stages"><span class="q-ico"><i class="fa-solid fa-map"></i></span><span class="q-txt"><b>Màn chơi</b><small>Thế giới, boss, quái thường, vật phẩm rơi</small></span><i class="fa-solid fa-chevron-right q-go"></i></button>
+      <button class="quick c-amber" data-goto="moves"><span class="q-ico"><i class="fa-solid fa-burst"></i></span><span class="q-txt"><b>Chiêu thức</b><small>Sức mạnh, hồi chiêu, mục tiêu của từng chiêu</small></span><i class="fa-solid fa-chevron-right q-go"></i></button>
+      <button class="quick c-blue" data-goto="users"><span class="q-ico"><i class="fa-solid fa-user-shield"></i></span><span class="q-txt"><b>Tài khoản</b><small>Tạo người chơi, phân quyền admin</small></span><i class="fa-solid fa-chevron-right q-go"></i></button>
+      <button class="quick c-yellow" data-goto="images"><span class="q-ico"><i class="fa-solid fa-images"></i></span><span class="q-txt"><b>Kho ảnh</b><small>Tải lên và quản lý ảnh nhân vật, kẻ địch</small></span><i class="fa-solid fa-chevron-right q-go"></i></button>
+    </div>
+  </section>
+
+  <!-- ===== NẠP DỮ LIỆU ===== -->
+  <section class="pane" id="tab-import">
+    <div class="pane-head">
+      <div class="ph-ico c-cyan"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <div class="ph-txt"><h2>Nạp dữ liệu game</h2><p>Soạn file <b>.txt</b> (UTF-8) theo mẫu, kiểm tra rồi nạp. Có lỗi ở bất kỳ khối nào thì không có gì được ghi.</p></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><span class="step">1</span>Chọn nguồn dữ liệu</div>
+      <div class="bar">
+        <label class="btn"><i class="fa-solid fa-folder-open"></i><span>Chọn file .txt</span><input type="file" id="imp-file" accept=".txt,text/plain" hidden></label>
+        <button class="btn" id="imp-sample"><i class="fa-solid fa-file-lines"></i><span>Xem file mẫu</span></button>
+        <span class="bar-sep"></span>
+        <select id="imp-kind">
+          <option value="all">Xuất tất cả</option><option value="characters">Xuất nhân vật</option>
+          <option value="stages">Xuất màn chơi</option><option value="moves">Xuất chiêu thức</option>
+        </select>
+        <button class="btn" id="imp-export"><i class="fa-solid fa-file-export"></i><span>Xuất dữ liệu hiện tại</span></button>
+        <button class="btn" id="imp-save"><i class="fa-solid fa-download"></i><span>Tải về .txt</span></button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><span class="step">2</span>Nội dung file</div>
+      <textarea id="imp-text" spellcheck="false" placeholder="[NHAN_VAT]&#10;ten = ..."></textarea>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><span class="step">3</span>Kiểm tra &amp; nạp</div>
+      <div class="bar">
+        <button class="btn" id="imp-check"><i class="fa-solid fa-magnifying-glass-chart"></i><span>Kiểm tra</span></button>
+        <button class="btn primary" id="imp-apply"><i class="fa-solid fa-circle-check"></i><span>Nạp vào game</span></button>
+      </div>
+      <div class="report" id="imp-report"></div>
+    </div>
+  </section>
+
+  <!-- ===== NHÂN VẬT ===== -->
+  <section class="pane" id="tab-chars">
+    <div class="pane-head">
+      <div class="ph-ico c-purple"><i class="fa-solid fa-user-group"></i></div>
+      <div class="ph-txt"><h2>Quản lý nhân vật</h2><p>Danh sách nhân vật trong game: thế giới, hệ, độ hiếm, tốc độ và tuyệt chiêu.</p></div>
+      <div class="ph-actions"><button class="btn primary" id="chars-add"><i class="fa-solid fa-plus"></i><span>Thêm nhân vật</span></button></div>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th></th><th>ID</th><th>Tên</th><th>Thế giới</th><th>Hệ</th><th>Hiếm</th><th>Tốc</th><th>Tuyệt chiêu</th><th>Đang sở hữu</th><th></th></tr></thead>
+      <tbody id="chars-body"></tbody>
+    </table></div>
+  </section>
+
+  <!-- ===== MÀN CHƠI ===== -->
+  <section class="pane" id="tab-stages">
+    <div class="pane-head">
+      <div class="ph-ico c-green"><i class="fa-solid fa-map"></i></div>
+      <div class="ph-txt"><h2>Quản lý màn chơi</h2><p>Các thế giới, level cap, boss, quái thường và vật phẩm rơi.</p></div>
+      <div class="ph-actions"><button class="btn primary" id="stages-add"><i class="fa-solid fa-plus"></i><span>Thêm màn</span></button></div>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>ID</th><th>Tên</th><th>Chương</th><th>Level</th><th>Boss</th><th>Quái thường</th><th>Vật phẩm rơi</th><th>Người chơi</th><th></th></tr></thead>
+      <tbody id="stages-body"></tbody>
+    </table></div>
+  </section>
+
+  <!-- ===== CHIÊU THỨC ===== -->
+  <section class="pane" id="tab-moves">
+    <div class="pane-head">
+      <div class="ph-ico c-amber"><i class="fa-solid fa-burst"></i></div>
+      <div class="ph-txt"><h2>Quản lý chiêu thức</h2><p>Sức mạnh, hồi chiêu, loại và mục tiêu của từng chiêu.</p></div>
+      <div class="ph-actions"><button class="btn primary" id="moves-add"><i class="fa-solid fa-plus"></i><span>Thêm chiêu</span></button></div>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Key</th><th>Tên</th><th>Hệ</th><th>Loại</th><th>Sức mạnh</th><th>Hồi chiêu</th><th>Mục tiêu</th><th>Dùng bởi</th><th></th></tr></thead>
+      <tbody id="moves-body"></tbody>
+    </table></div>
+  </section>
+
+  <!-- ===== TÀI KHOẢN ===== -->
+  <section class="pane" id="tab-users">
+    <div class="pane-head">
+      <div class="ph-ico c-blue"><i class="fa-solid fa-user-shield"></i></div>
+      <div class="ph-txt"><h2>Quản lý tài khoản</h2><p>Người chơi và quản trị viên trong hệ thống.</p></div>
+      <div class="ph-actions"><button class="btn primary" id="users-add"><i class="fa-solid fa-plus"></i><span>Tạo tài khoản</span></button></div>
+    </div>
+    <div class="note"><i class="fa-solid fa-circle-info"></i><span>Tài khoản có vai trò <b>admin</b> sẽ thấy mục "Quản trị" trên header của game. Tài khoản mới được tạo kèm đội khởi đầu (6 nhân vật Lv.5) và ít vật phẩm.</span></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>ID</th><th>Tên</th><th>Vai trò</th><th>Vàng</th><th>Vé</th><th>Tinh thể</th><th>Tiến độ</th><th>Nhân vật</th><th>Online cuối</th><th></th></tr></thead>
+      <tbody id="users-body"></tbody>
+    </table></div>
+  </section>
+
+  <!-- ===== ẢNH ===== -->
+  <section class="pane" id="tab-images">
+    <div class="pane-head">
+      <div class="ph-ico c-yellow"><i class="fa-solid fa-images"></i></div>
+      <div class="ph-txt"><h2>Kho ảnh</h2><p>Bấm vào ảnh để sao chép tên file. Tên file được chuyển sang ASCII (không dấu).</p></div>
+      <div class="ph-actions"><label class="btn primary"><i class="fa-solid fa-arrow-up-from-bracket"></i><span>Tải ảnh lên</span><input type="file" id="img-file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden></label></div>
+    </div>
+    <div class="imggrid" id="img-grid"></div>
+  </section>
+
+  <datalist id="imgs"></datalist>
+  <dialog id="modal"></dialog>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+<script>
+  // Lối tắt ở Tổng quan: bấm đúng nút tab để dùng lại logic chuyển tab của admin.js
+  document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => {
+    const t = document.querySelector('#tabs [data-tab="' + b.dataset.goto + '"]');
+    if (t) t.click();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }));
+</script>
+{% endblock %}

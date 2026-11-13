@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% set active_nav = 'map' %}
+{% block header_js %}{% endblock %}
+{% block content %}
+
+<main class="center">
+  <div class="timeline-bar">
+    <div class="tl-title"><span id="stage-name">Cổng Không Gian</span><span class="muted-n" id="stage-sub"></span></div>
+    <div class="tl-track" id="stage-track"></div>
+    <div class="pixel tl-count" id="stage-count">1 / 30</div>
+  </div>
+
+  <div class="arena">
+    <div class="bg">
+      <div class="bg-dots"></div>
+      <div class="bg-pillars"><i></i><i></i><i></i><i></i></div>
+      <div class="lantern l1 sway"></div>
+      <div class="lantern l2 sway"></div>
+      <div class="bg-floor"><div></div></div>
+    </div>
+
+    <div class="hud">
+      <div class="clock"><i class="fa-solid fa-moon amber-l" id="clock-ic"></i><span class="pixel" id="clock">21:15</span><span class="sep">|</span><b id="stage-label">Cổng Không Gian</b></div>
+      <div class="chips">
+        <span class="chip" id="turn-chip">Chuẩn bị</span>
+        <span class="chip buff" id="buff-chip" hidden><i class="fa-solid fa-bolt"></i> <span></span></span>
+      </div>
+      <div class="foe-card">
+        <div class="foe-txt">
+          <div class="foe-name"><span id="foe-name">Kẻ địch</span></div>
+          <div class="foe-dots" id="foe-dots"></div>
+        </div>
+        <div class="foe-av"><i class="fa-solid fa-skull"></i></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="party" id="party"></div>
+
+      <div class="ally-wrap idle" id="ally-wrap">
+        <div class="ring"></div>
+        <div class="glow"></div>
+        <i class="spark s1 bounce fa-solid fa-wand-magic-sparkles"></i>
+        <i class="spark s2 pulse fa-solid fa-star"></i>
+        <i class="spark s3 fa-solid fa-sparkles"></i>
+        <div class="mon-card ally" id="ally-card">
+          <div class="mc-row"><span class="mc-name" id="ally-name">...</span><span class="pixel mc-lv" id="ally-lv"></span></div>
+          <div class="mc-hp"><div id="ally-hp"></div></div>
+          <div class="mc-row mono"><span class="mc-tag" id="ally-tag"></span><span id="ally-hptext"></span></div>
+          <div class="mc-exp"><div id="ally-exp"></div></div>
+          <div class="mc-moves" id="ally-moves"></div>
+          <div class="mc-row mono"><span>EXP</span><span id="ally-exptext"></span></div>
+        </div>
+        <div class="sprite" id="ally-stage">
+          <div class="mon ally-mon" id="ally-emoji"></div>
+          <div class="shadow"></div>
+        </div>
+      </div>
+
+      <div class="vs"><span class="pixel">VS</span><i></i></div>
+      <div class="enemies" id="enemies"></div>
+    </div>
+
+    <div class="dialog-wrap">
+      <div class="dialog">
+        <div class="dlg-text"><i class="fa-regular fa-comment-dots amber-l"></i>
+          <p id="dialog">Cổng không gian đang mở...</p>
+        </div>
+        <div class="speed" role="group" aria-label="Tốc độ trận đấu">
+          <button data-speed="1">x1</button><button data-speed="2">x2</button><button data-speed="3">x3</button>
+          <i class="vbar"></i>
+          <span class="auto">Tự Động <i class="fa-solid fa-bolt"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="ticker"><span class="amber-l b"><i class="fa-solid fa-bullhorn"></i> Thông báo:</span><span id="ticker">Đội hình đang tự động chiến đấu xuyên các vũ trụ.</span></footer>
+</main>
+
+<aside class="side right">
+  <div class="box">
+    <div class="box-head">
+      <div class="box-title"><span>Vật phẩm tiêu hao</span><span class="help" title="Bấm vào vật phẩm để sử dụng">?</span></div>
+      <button class="retro-btn mini" data-phase="3" data-label="Túi Đồ"><i class="fa-solid fa-bag-shopping"></i><span>Túi đồ</span></button>
+    </div>
+    <div class="grid4" id="consumables"></div>
+  </div>
+
+  <div class="box">
+    <div class="box-head">
+      <div class="box-title"><span>Xuất hiện tại đây</span><span class="help" title="Kẻ địch của thế giới hiện tại">?</span></div>
+      <span class="zone" id="zone">-</span>
+    </div>
+    <div id="uni-info"></div>
+  </div>
+
+  <div class="box grow">
+    <div class="box-head"><div class="box-title"><span>Nhật ký chiến đấu</span></div></div>
+    <div class="log" id="log" aria-live="polite"></div>
+  </div>
+</aside>
+
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/battle.js') }}"></script>{% endblock %}

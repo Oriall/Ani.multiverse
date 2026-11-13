@@ -1,0 +1,128 @@
+{% set shell = current_user is not none and not bare %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Multiverse Gacha{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% if not shell %}page{% endif %} {% block body_class %}{% endblock %}">
+
+{% if shell %}
+<header class="header">
+  <div class="hd-left">
+    <div class="profile">
+      <div class="pf-avatar"><div><i class="fa-solid fa-user-ninja"></i></div></div>
+      <div class="pf-col">
+        <div class="pf-row">
+          <span class="pf-name" id="pf-name">...</span>
+          <span class="pf-badge" id="pf-tag"></span>
+        </div>
+        <div class="pf-dex" id="collect-text">Sưu tập: <b>0 / 0</b></div>
+      </div>
+    </div>
+    <div class="res">
+      <span class="res-tag">VÀNG</span>
+      <span class="pixel res-num gold" id="cur-coins">0</span>
+    </div>
+    <div class="res" title="Vé triệu hồi Cổng Không Gian">
+      <i class="fa-solid fa-ticket res-ico cyan"></i>
+      <span class="pixel res-num cyan" id="cur-tickets">0</span>
+    </div>
+    <div class="res" title="Mảnh tinh thể không gian">
+      <i class="fa-solid fa-gem res-ico rose"></i>
+      <span class="pixel res-num rose" id="cur-crystals">0</span>
+    </div>
+  </div>
+  <div class="hd-right">
+    <div class="online"><span class="dot-live"></span><span><b id="online-count">1.193</b> đang chơi</span></div>
+    <button class="icon-btn" id="btn-time" title="Thời gian trong thế giới"><i class="fa-solid fa-moon"></i></button>
+    <button class="retro-btn donate" id="btn-donate"><i class="fa-solid fa-heart"></i><span>Ủng hộ</span></button>
+    <button class="retro-btn save" id="btn-save"><i class="fa-solid fa-floppy-disk"></i><span>Lưu game</span></button>
+    <button class="icon-btn" id="btn-settings" title="Cài đặt hệ thống"><i class="fa-solid fa-gear"></i></button>
+    {% if current_user.role == 'admin' %}
+    <a class="retro-btn save" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-user-shield"></i><span>Quản trị</span></a>
+    {% endif %}
+    <a class="retro-btn save" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i><span>Đăng xuất</span></a>
+  </div>
+</header>
+
+<div class="dash">
+  <aside class="side left">
+    <div class="side-top">
+      <div class="story">
+        <div class="story-row">
+          <span class="amber"><i class="fa-solid fa-star"></i> Thế giới hiện tại</span>
+          <span class="muted10" id="uc-lv">Lv. -</span>
+        </div>
+        <div class="story-title" id="uc-name">...</div>
+        <div class="story-chap" id="uc-chapter"></div>
+        <div class="pbar"><div id="uc-fill"></div></div>
+        <div class="story-row muted10">
+          <span id="uc-step">Tiến độ: Ải 1 / 30</span>
+          <b class="amber" id="uc-pct">0%</b>
+        </div>
+      </div>
+
+      <nav class="nav">
+        {% for g in nav_groups %}
+        <div class="nav-group">
+          {% if g.title %}<div class="nav-title">{{ g.title }}</div>{% endif %}
+          {% for it in g['items'] %}
+          {% set locked = it.url is none %}
+          <a href="{{ it.url or '#' }}"
+             class="nav-item{% if active_nav == it.key %} active{% endif %}{% if it.key == 'black' %} danger{% endif %}{% if locked %} locked{% endif %}"
+             {% if locked %}data-phase="{{ it.phase }}" data-label="{{ it.label }}"{% endif %}>
+            <span class="nav-l"><i class="fa-solid {{ it.icon }} nav-ic"></i><span>{{ it.label }}</span></span>
+            {% if active_nav == it.key %}<span class="nav-dot"></span>
+            {% elif locked and it.phase == 3 %}<i class="fa-solid fa-lock lock"></i>{% endif %}
+          </a>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </nav>
+    </div>
+    <div class="side-foot"><span>Máy chủ: Multiverse 01</span><span class="ping">Ping: 24ms</span></div>
+  </aside>
+{% else %}
+{% block topbar %}<div class="topbar"><div class="brand">Multiverse Gacha</div></div>{% endblock %}
+{% endif %}
+
+{% block content %}{% endblock %}
+
+{% if shell %}</div>{% endif %}
+
+<div class="toast" id="toast"></div>
+
+{% if shell %}
+{# Điền header + thẻ thế giới cho các trang con. Trang index ghi đè block này thành rỗng vì battle.js đã tự làm #}
+{% block header_js %}
+<script>
+(async () => {
+  const $ = id => document.getElementById(id);
+  const set = (id, v) => { const e = $(id); if (e && v !== undefined && v !== null) e.textContent = v; };
+  try {
+    const r = await fetch('/api/state');
+    if (!r.ok) return;
+    const s = await r.json(), u = s.user, w = s.universe || {};
+    set('pf-name', u.name); set('pf-tag', u.tag);
+    set('cur-coins', u.coins); set('cur-tickets', u.tickets); set('cur-crystals', u.crystals);
+    if ($('collect-text')) $('collect-text').innerHTML = 'Sưu tập: <b>' + u.owned + ' / ' + u.total_chars + '</b>';
+    set('uc-name', w.name); set('uc-chapter', w.chapter); set('uc-lv', 'Cap Lv. ' + w.lv_max);
+    const pct = Math.round((u.node - 1) / 30 * 100);
+    set('uc-step', 'Tiến độ: Ải ' + u.node + ' / 30'); set('uc-pct', pct + '%');
+    if ($('uc-fill')) $('uc-fill').style.width = pct + '%';
+  } catch (e) { /* trang vẫn dùng được nếu API lỗi */ }
+})();
+</script>
+{% endblock %}
+{% endif %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

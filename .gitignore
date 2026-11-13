@@ -1,0 +1,18 @@
+# Các file chứa biến môi trường, cấu hình mật khẩu, API key
+.env
+config.json
+
+# Thư mục chứa các gói thư viện phụ thuộc (rất nặng, không cần đẩy lên)
+node_modules/
+venv/
+__pycache__/
+
+# Các file sinh ra trong quá trình build / biên dịch code
+dist/
+build/
+*.log
+
+# File hệ thống của hệ điều hành
+.DS_Store
+Thumbs.db
+instance
